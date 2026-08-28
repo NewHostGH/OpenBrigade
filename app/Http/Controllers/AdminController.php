@@ -420,10 +420,16 @@ class AdminController extends Controller
 
     public function settings(): View
     {
+        // Settings that only make sense while their feature is enabled.
+        // 47 = "Période de disponibilité" (depends on the disponibilites feature).
+        $features = app(FeatureService::class);
+        $featureDependent = $features->isEnabled('disponibilites') ? [] : [47];
+
         $rows = DB::table('configuration')
             ->where('HIDDEN', 0)
             ->whereNotIn('ID', DB::table('ob_feature')->whereNotNull('legacy_config_id')->pluck('legacy_config_id'))
             ->whereNotIn('ID', self::SECURITY_IDS)
+            ->whereNotIn('ID', $featureDependent)
             ->orderBy('TAB')
             ->orderBy('ORDERING')
             ->get();

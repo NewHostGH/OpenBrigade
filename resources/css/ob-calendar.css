@@ -1,10 +1,12 @@
 /* ── Universal calendar (FullCalendar) ─────────────────────────────────────
    Maps FullCalendar's own CSS custom properties onto the OpenBrigade design
    tokens so the calendar reads as part of the app. FullCalendar ships its
-   base styles in JS (bundled by Vite); these only re-theme it. Scoped to the
-   calendar container so nothing leaks. */
+   base styles in JS (bundled by Vite); these only re-theme it. The structural
+   rules apply to every calendar container ([data-ob-calendar] and the section
+   planning [data-ob-section-planning]); the personal event-colour classes stay
+   scoped to the personal planning. */
 
-[data-ob-calendar] {
+:is([data-ob-calendar], [data-ob-section-planning]) {
     --fc-border-color: var(--brand-border, #e3e6ea);
     --fc-neutral-bg-color: var(--sidebar-bg, #fafafa);
     --fc-page-bg-color: transparent;
@@ -23,32 +25,32 @@
 }
 
 /* App-consistent toolbar title + buttons */
-[data-ob-calendar] .fc-toolbar-title {
+:is([data-ob-calendar], [data-ob-section-planning]) .fc-toolbar-title {
     font-size: var(--font-size-base, 1rem);
     font-weight: 600;
 }
 
-[data-ob-calendar] .fc .fc-button {
+:is([data-ob-calendar], [data-ob-section-planning]) .fc .fc-button {
     padding: 0.2rem 0.55rem;
     font-size: var(--font-size-sm, 0.875rem);
     border-radius: var(--radius-md, 6px);
 }
 
 /* Day numbers are anchors — strip the global link styling (blue + underline) */
-[data-ob-calendar] .fc a {
+:is([data-ob-calendar], [data-ob-section-planning]) .fc a {
     text-decoration: none;
 }
 
-[data-ob-calendar] .fc-daygrid-day-number {
+:is([data-ob-calendar], [data-ob-section-planning]) .fc-daygrid-day-number {
     color: var(--text-body, #212529);
 }
 
 /* Coloured header row (day-of-week names), matching the app's table headers */
-[data-ob-calendar] .fc .fc-col-header-cell {
+:is([data-ob-calendar], [data-ob-section-planning]) .fc .fc-col-header-cell {
     background: var(--table-header-bg, #495565);
 }
 
-[data-ob-calendar] .fc .fc-col-header-cell-cushion {
+:is([data-ob-calendar], [data-ob-section-planning]) .fc .fc-col-header-cell-cushion {
     color: var(--table-header-text, #ffffff);
     font-weight: 600;
     padding: 6px 4px;
@@ -56,21 +58,21 @@
 }
 
 /* Alternating week-row shading; keep the "today" highlight on top */
-[data-ob-calendar] .fc-daygrid-body tr:nth-child(even) .fc-daygrid-day {
+:is([data-ob-calendar], [data-ob-section-planning]) .fc-daygrid-body tr:nth-child(even) .fc-daygrid-day {
     background: color-mix(in srgb, var(--sidebar-bg, #fafafa) 55%, transparent);
 }
 
-[data-ob-calendar] .fc .fc-day-today {
+:is([data-ob-calendar], [data-ob-section-planning]) .fc .fc-day-today {
     background: var(--fc-today-bg-color) !important;
 }
 
 /* Wash out past days (cell + their events) */
-[data-ob-calendar] .fc-day-past .fc-daygrid-day-frame {
+:is([data-ob-calendar], [data-ob-section-planning]) .fc-day-past .fc-daygrid-day-frame {
     opacity: 0.5;
 }
 
 /* Circle around today's date number */
-[data-ob-calendar] .fc-day-today .fc-daygrid-day-number {
+:is([data-ob-calendar], [data-ob-section-planning]) .fc-day-today .fc-daygrid-day-number {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -84,10 +86,10 @@
     font-weight: 600;
 }
 
-/* ── Event colours ──────────────────────────────────────────────────────────
+/* ── Personal planning event colours ────────────────────────────────────────
    Activities blue, accepted absences pink, pending absences light-pink stripes.
    Set via classNames from the events feed; !important beats FullCalendar's own
-   per-event background rules. */
+   per-event background rules. (Section planning colours per person instead.) */
 [data-ob-calendar] .fc-ev-activity {
     background: #2563eb !important;
     border-color: #1d4ed8 !important;

@@ -8,11 +8,18 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'title' => 'Mon planning',
-    'breadcrumb' => 'Mon planning',
+    'title' => 'Planning',
+    'breadcrumb' => 'Planning',
 
     // Navigation mensuelle
     'this_month' => 'Ce mois-ci',
+
+    // Personnel filter (managers — permission 56)
+    'people_title' => 'Personnel',
+    'select_all' => 'Tout cocher',
+    'select_none' => 'Tout décocher',
+    'all_sections' => 'Toutes mes sections',
+    'legend_note' => 'Couleur = personne · motif = type :',
 
     // Jours (abréviations)
     'day_mon' => 'Lun',

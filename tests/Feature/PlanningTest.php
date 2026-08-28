@@ -48,7 +48,7 @@ beforeEach(function () {
 // ── Access control ───────────────────────────────────────────────────────────
 
 test('unauthenticated users are redirected from /planning to login', function () {
-    $this->get('/planning')->assertRedirect('/login');
+    $this->get('/calendar')->assertRedirect('/login');
 });
 
 // ── Legacy bridge redirects ──────────────────────────────────────────────────
@@ -65,26 +65,42 @@ test('legacy myagenda.php redirects to planning.index', function () {
         ->assertRedirect(route('planning.index'));
 });
 
-// ── Planning calendar (index renders the FullCalendar shell, no DB) ───────────
+// ── Planning calendar (index renders the calendar + person filter) ───────────
+
+/** Bind PlanningController so index() renders the view DB-free. */
+function planningStubIndexView(): void
+{
+    app()->bind(PlanningController::class, function () {
+        $ctrl = Mockery::mock(PlanningController::class)->makePartial();
+        $person = (object) ['P_ID' => 1, 'P_NOM' => 'Test', 'P_PRENOM' => 'User', 'P_SECTION' => 1, 'color' => '#2563eb'];
+        $ctrl->shouldReceive('index')->andReturn(
+            view('planning.index', ['personnel' => collect([$person]), 'sectionId' => null, 'canSeeOthers' => false])
+        );
+
+        return $ctrl;
+    });
+}
 
 test('authenticated users can access the planning', function () {
-    $this->actingAs(planningFakeUser())->get('/planning')->assertStatus(200);
+    planningStubIndexView();
+    $this->actingAs(planningFakeUser())->get('/calendar')->assertStatus(200);
 });
 
-test('planning index renders the calendar shell', function () {
-    $this->actingAs(planningFakeUser())->get('/planning')
+test('planning index renders the calendar container', function () {
+    planningStubIndexView();
+    $this->actingAs(planningFakeUser())->get('/calendar')
         ->assertViewIs('planning.index')
-        ->assertSee('data-ob-calendar', false);
+        ->assertSee('data-ob-section-planning', false);
 });
 
 // ── Planning events feed (JSON) ──────────────────────────────────────────────
 
 test('the planning events route is registered', function () {
-    expect(route('planning.events'))->toContain('/planning/events');
+    expect(route('planning.events'))->toContain('/calendar/events');
 });
 
 test('unauthenticated users are redirected from the planning events feed to login', function () {
-    $this->get('/planning/events')->assertRedirect('/login');
+    $this->get('/calendar/events')->assertRedirect('/login');
 });
 
 test('the events feed returns JSON', function () {
@@ -98,7 +114,7 @@ test('the events feed returns JSON', function () {
         return $ctrl;
     });
 
-    $this->actingAs(planningFakeUser())->get('/planning/events')
+    $this->actingAs(planningFakeUser())->get('/calendar/events')
         ->assertStatus(200)
         ->assertJsonFragment(['title' => 'Formation PSC1']);
 });
@@ -123,10 +139,12 @@ function planningStubPrint(User $user): void
         ];
         $ctrl->shouldReceive('print')->andReturn(
             view('planning.print', [
-                'events' => collect([$event]),
-                'absences' => collect([$absence]),
+                'people' => collect([[
+                    'name' => strtoupper($user->P_NOM).' '.$user->P_PRENOM,
+                    'events' => collect([$event]),
+                    'absences' => collect([$absence]),
+                ]]),
                 'first' => $now->copy()->startOfMonth(),
-                'user' => $user,
                 'year' => $now->year,
                 'month' => $now->month,
             ])
@@ -137,21 +155,21 @@ function planningStubPrint(User $user): void
 }
 
 test('the planning print route is registered', function () {
-    expect(route('planning.print'))->toContain('/planning/print');
+    expect(route('planning.print'))->toContain('/calendar/print');
 });
 
 test('unauthenticated users are redirected from the planning print to login', function () {
-    $this->get('/planning/print')->assertRedirect('/login');
+    $this->get('/calendar/print')->assertRedirect('/login');
 });
 
 test('authenticated users can view the printable planning', function () {
     $user = planningFakeUser(['P_NOM' => 'Durand', 'P_PRENOM' => 'Paul']);
     planningStubPrint($user);
 
-    $this->actingAs($user)->get('/planning/print')
+    $this->actingAs($user)->get('/calendar/print')
         ->assertStatus(200)
         ->assertViewIs('planning.print')
-        ->assertSee('Paul DURAND')
+        ->assertSee('DURAND Paul')
         ->assertSee(__('planning.print_section_events'))
         ->assertSee('Formation PSC1')
         ->assertSee(__('planning.print_section_absences'))
