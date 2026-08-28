@@ -24,6 +24,8 @@ export default defineConfig({
                 'resources/js/ob-pdf-personnel.js',
                 'resources/js/ob-dashboard.js',
                 'resources/js/ob-calendar.js',
+                'resources/js/ob-section-planning.js',
+                'resources/js/ob-availability.js',
             ],
             refresh: true,
         }),

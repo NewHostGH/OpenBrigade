@@ -33,6 +33,7 @@ class GeneralSettingService
         'maintenance_text' => '',
         'ameliorations' => 0,
         'auto_optimize' => 0,
+        'dispo_periodes' => 4,
     ];
 
     /** @var array<string,string>|null */

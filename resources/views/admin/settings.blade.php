@@ -202,6 +202,23 @@
                                                     </button>
                                                 </form>
 
+                                            @elseif($row->ID == 47)
+                                                {{-- Availability periods per 24h --}}
+                                                <form method="POST" action="{{ route('admin.settings.save', $row->ID) }}"
+                                                      class="d-flex gap-2 align-items-center">
+                                                    @csrf @method('PATCH')
+                                                    <input type="hidden" name="_tab" value="{{ $tabId }}">
+                                                    <select name="VALUE" class="form-select form-select-sm" style="max-width:320px;">
+                                                        <option value="1" @selected($row->VALUE=='1')>{{ __('admin.settings.dispo_periodes_1') }}</option>
+                                                        <option value="2" @selected($row->VALUE=='2')>{{ __('admin.settings.dispo_periodes_2') }}</option>
+                                                        <option value="3" @selected($row->VALUE=='3')>{{ __('admin.settings.dispo_periodes_3') }}</option>
+                                                        <option value="4" @selected($row->VALUE=='4')>{{ __('admin.settings.dispo_periodes_4') }}</option>
+                                                    </select>
+                                                    <button type="submit" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-save"></i>
+                                                    </button>
+                                                </form>
+
                                             @elseif($row->ID == 44)
                                                 {{-- Encryption method --}}
                                                 <form method="POST" action="{{ route('admin.settings.save', $row->ID) }}"

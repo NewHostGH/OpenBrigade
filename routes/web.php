@@ -174,7 +174,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/replacements', [ReplacementController::class, 'index'])->name('replacement.index')->middleware(['permission:0', 'feature:remplacements']);
     Route::get('/replacements/export/xls', [ReplacementController::class, 'exportXls'])->name('replacement.export.xls')->middleware(['permission:0', 'feature:remplacements']);
     Route::get('/replacements/export/csv', [ReplacementController::class, 'exportCsv'])->name('replacement.export.csv')->middleware(['permission:0', 'feature:remplacements']);
-    Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability.index')->middleware('permission:38');
+    Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability.index')->middleware(['permission:38', 'feature:disponibilites']);
+    Route::post('/availability/toggle', [AvailabilityController::class, 'toggle'])->name('availability.toggle')->middleware(['permission:38', 'feature:disponibilites']);
+    Route::get('/availability/print', [AvailabilityController::class, 'print'])->name('availability.print')->middleware(['permission:38', 'feature:disponibilites']);
     Route::get('/admin/monitoring', [AdminController::class, 'monitoring'])->name('admin.monitoring')->middleware('permission:49');
     // Diagnostics — deliberately trigger an issue to verify the observability
     // pipeline (error tracking, error/performance canaux) end to end.
@@ -336,9 +338,10 @@ Route::middleware('auth')->group(function () {
         Route::post('/dues', [DuesController::class, 'batchSave'])->name('dues.save')->middleware('permission:53');
         Route::get('/dues/export', [DuesController::class, 'export'])->name('dues.export')->middleware('permission:53');
     });
-    Route::get('/planning', [PlanningController::class, 'index'])->name('planning.index')->middleware('permission:0');
-    Route::get('/planning/events', [PlanningController::class, 'events'])->name('planning.events')->middleware('permission:0');
-    Route::get('/planning/print', [PlanningController::class, 'print'])->name('planning.print')->middleware('permission:0');
+    // Calendrier — shared calendar (activities + absences), multi-person for managers.
+    Route::get('/calendar', [PlanningController::class, 'index'])->name('planning.index')->middleware('permission:0');
+    Route::get('/calendar/events', [PlanningController::class, 'events'])->name('planning.events')->middleware('permission:0');
+    Route::get('/calendar/print', [PlanningController::class, 'print'])->name('planning.print')->middleware('permission:0');
     Route::middleware('feature:vehicules')->group(function () {
         Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicle.index')->middleware('permission:42');
         // List exports (static segments before the {vehicle} wildcard).

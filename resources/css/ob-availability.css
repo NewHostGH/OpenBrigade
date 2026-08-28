@@ -1,0 +1,124 @@
+/* ── Disponibilités grid (personnel × days) ────────────────────────────────── */
+
+.ob-sp-wrap {
+    overflow-x: auto;
+}
+
+.ob-sp-table {
+    border-collapse: collapse;
+    font-size: var(--font-size-sm, 0.875rem);
+    white-space: nowrap;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.ob-sp-table th,
+.ob-sp-table td {
+    border: 1px solid var(--brand-border, #e3e6ea);
+    text-align: center;
+    padding: 3px;
+}
+
+.ob-sp-name {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--sidebar-bg, #fafafa);
+    text-align: left !important;
+    padding: 4px 10px !important;
+    width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ob-sp-table thead .ob-sp-name {
+    z-index: 3;
+    background: var(--table-header-bg, #495565);
+    color: var(--table-header-text, #fff);
+}
+
+.ob-sp-table thead th {
+    background: var(--table-header-bg, #495565);
+    color: var(--table-header-text, #fff);
+    min-width: 40px;
+    padding: 5px 4px;
+    font-weight: 600;
+    line-height: 1.15;
+}
+
+.ob-sp-table thead th .ob-sp-wd {
+    display: block;
+    font-weight: 400;
+    opacity: 0.8;
+    font-size: 0.85em;
+}
+
+.ob-sp-weekend {
+    background: color-mix(in srgb, var(--sidebar-bg, #fafafa) 60%, transparent);
+}
+
+.ob-sp-today {
+    background: color-mix(in srgb, var(--brand-bg, #2B2350) 9%, transparent);
+}
+
+.ob-sp-cell {
+    height: 34px;
+    min-width: 40px;
+    vertical-align: middle;
+}
+
+/* Read-only availability badge (other people's rows) */
+.ob-av-badge {
+    display: inline-block;
+    min-width: 20px;
+    height: 20px;
+    line-height: 20px;
+    padding: 0 4px;
+    margin: 1px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+    vertical-align: middle;
+}
+
+/* Clickable period slots (your own row) */
+.ob-av-slot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin: 1px;
+    padding: 0;
+    border-radius: 4px;
+    border: 1px solid var(--brand-border, #cbd5e1);
+    background: transparent;
+    color: var(--text-muted-soft, #94a3b8);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.1s, color 0.1s;
+}
+
+.ob-av-slot:hover {
+    border-color: var(--slot-color, #64748b);
+    color: var(--slot-color, #64748b);
+}
+
+.ob-av-slot.is-on {
+    background: var(--slot-color, #2563eb);
+    border-color: var(--slot-color, #2563eb);
+    color: #fff;
+}
+
+/* Hide interactivity when printing; show only "on" slots and badges */
+@media print {
+    .ob-av-slot {
+        border: none;
+    }
+    .ob-av-slot:not(.is-on) {
+        visibility: hidden;
+    }
+}

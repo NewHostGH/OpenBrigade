@@ -1,0 +1,91 @@
+/* ── Shared calendar — personnel filter + per-person / per-type styling ─────── */
+
+.ob-sp-people {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.ob-sp-person {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px;
+    border-radius: var(--radius-sm, 4px);
+    cursor: pointer;
+    font-size: var(--font-size-sm, 0.875rem);
+}
+
+.ob-sp-person:hover {
+    background: var(--sidebar-bg-hover, #f1f1f1);
+}
+
+.ob-sp-person input {
+    margin: 0;
+}
+
+.ob-sp-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.ob-sp-person-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ── Event-type patterns (multi-person mode) ────────────────────────────────
+   The person is identified by colour (set inline on each event); the TYPE is
+   identified by a translucent pattern overlaid on that colour, so both read at
+   once. Activities are solid; accepted absences get diagonal stripes; pending
+   absences get a denser cross-hatch. */
+[data-ob-section-planning] .fc-sp-abs {
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.5) 0, rgba(255, 255, 255, 0.5) 5px,
+        transparent 5px, transparent 10px
+    );
+}
+
+[data-ob-section-planning] .fc-sp-abs-pending {
+    background-image:
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.6) 0, rgba(255, 255, 255, 0.6) 3px, transparent 3px, transparent 6px),
+        repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.14) 0, rgba(0, 0, 0, 0.14) 3px, transparent 3px, transparent 6px);
+}
+
+/* ── Type legend (under the personnel selection) ────────────────────────────── */
+.ob-sp-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: var(--font-size-xs, 0.8rem);
+}
+
+.ob-sp-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ob-sp-legend-swatch {
+    display: inline-block;
+    width: 16px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    background-color: #64748b;
+}
+
+.ob-sp-legend-swatch--abs {
+    background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.5) 0, rgba(255, 255, 255, 0.5) 5px, transparent 5px, transparent 10px);
+}
+
+.ob-sp-legend-swatch--pending {
+    background-image:
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.6) 0, rgba(255, 255, 255, 0.6) 3px, transparent 3px, transparent 6px),
+        repeating-linear-gradient(-45deg, rgba(0, 0, 0, 0.14) 0, rgba(0, 0, 0, 0.14) 3px, transparent 3px, transparent 6px);
+}
