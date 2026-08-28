@@ -66,6 +66,7 @@ return [
             'items' => [
                 ['key' => 'planning.calendar',     'label' => 'Calendrier',      'url' => '/calendar',         'icon' => 'calendar'],
                 ['key' => 'planning.availability', 'label' => 'Disponibilités',  'url' => '/availability',     'icon' => 'check-square',   'permission' => 38, 'feature' => 'disponibilites'],
+                ['key' => 'planning.timesheet',    'label' => 'Horaires',        'url' => '/timesheet',        'icon' => 'clock',                              'feature' => 'horaires'],
                 ['key' => 'planning.absences',     'label' => 'Absences',        'url' => '/unavailability',   'icon' => 'user-times',     'permission' => 11],
                 ['key' => 'planning.rest',         'label' => 'Repos',           'url' => '/legacy/repos_saisie.php',                    'icon' => 'bed',            'permission' => 11],
                 ['key' => 'planning.replacement',  'label' => 'Remplacements',   'url' => '/replacements',     'icon' => 'exchange-alt',   'permission' => 41, 'feature' => 'remplacements'],
