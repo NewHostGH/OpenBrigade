@@ -1,0 +1,134 @@
+/* ── Horaires de travail (weekly timesheet) ───────────────────────────────── */
+
+.ob-ts-wrap {
+    overflow-x: auto;
+}
+
+.ob-ts-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: var(--font-size-sm, 0.875rem);
+}
+
+.ob-ts-table th,
+.ob-ts-table td {
+    border: 1px solid var(--brand-border, #e3e6ea);
+    text-align: center;
+    padding: 4px 6px;
+    vertical-align: middle;
+}
+
+.ob-ts-table thead th {
+    background: var(--table-header-bg, #495565);
+    color: var(--table-header-text, #fff);
+    font-weight: 600;
+    line-height: 1.15;
+}
+
+.ob-ts-table thead th i {
+    font-weight: 400;
+    font-style: italic;
+    opacity: 0.85;
+}
+
+.ob-ts-day {
+    text-align: left !important;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.ob-ts-weekend {
+    background: color-mix(in srgb, var(--sidebar-bg, #fafafa) 60%, transparent);
+}
+
+.ob-ts-today {
+    background: color-mix(in srgb, var(--brand-bg, #2B2350) 9%, transparent);
+}
+
+.ob-ts-input {
+    width: 78px;
+    max-width: 100%;
+    text-align: center;
+    padding: 2px 4px;
+    display: inline-block;
+}
+
+/* Native time pickers need room for the HH:MM (+ AM/PM) and the clock icon. */
+input.ob-ts-input[type='time'] {
+    width: 128px;
+    text-align: left;
+}
+
+.ob-ts-table td,
+.ob-ts-table th {
+    white-space: nowrap;
+}
+
+.ob-ts-comment {
+    width: 100%;
+    min-width: 160px;
+    text-align: left;
+    padding: 2px 6px;
+}
+
+.ob-ts-total {
+    font-weight: 700;
+}
+
+.ob-ts-absence {
+    color: var(--bs-danger, #dc3545);
+    font-size: var(--font-size-xs, 0.75rem);
+    font-weight: 600;
+}
+
+.ob-ts-totals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-top: 0.75rem;
+    font-size: var(--font-size-sm, 0.875rem);
+}
+
+.ob-ts-totals strong {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Validation status badge */
+.ob-ts-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: var(--font-size-xs, 0.75rem);
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.ob-ts-badge--open {
+    background: color-mix(in srgb, #2563eb 15%, transparent);
+    color: #1d4ed8;
+}
+
+.ob-ts-badge--pending {
+    background: color-mix(in srgb, #d97706 18%, transparent);
+    color: #b45309;
+}
+
+.ob-ts-badge--validated {
+    background: color-mix(in srgb, #16a34a 18%, transparent);
+    color: #15803d;
+}
+
+.ob-ts-badge--rejected {
+    background: color-mix(in srgb, #dc2626 15%, transparent);
+    color: #b91c1c;
+}
+
+@media print {
+    .ob-ts-input,
+    .ob-ts-comment {
+        border: none !important;
+        background: transparent !important;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+}

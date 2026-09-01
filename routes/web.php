@@ -39,6 +39,7 @@ use App\Http\Controllers\SetupController;
 use App\Http\Controllers\ShortcutController;
 use App\Http\Controllers\SmsHistoryController;
 use App\Http\Controllers\StatisticsController;
+use App\Http\Controllers\TimesheetController;
 use App\Http\Controllers\TotpController;
 use App\Http\Controllers\UnavailabilityController;
 use App\Http\Controllers\VehicleController;
@@ -177,6 +178,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/availability', [AvailabilityController::class, 'index'])->name('availability.index')->middleware(['permission:38', 'feature:disponibilites']);
     Route::post('/availability/toggle', [AvailabilityController::class, 'toggle'])->name('availability.toggle')->middleware(['permission:38', 'feature:disponibilites']);
     Route::get('/availability/print', [AvailabilityController::class, 'print'])->name('availability.print')->middleware(['permission:38', 'feature:disponibilites']);
+    // Horaires de travail — weekly salaried-staff timesheet + validation workflow.
+    Route::get('/timesheet', [TimesheetController::class, 'index'])->name('timesheet.index')->middleware(['permission:0', 'feature:horaires']);
+    Route::post('/timesheet', [TimesheetController::class, 'save'])->name('timesheet.save')->middleware(['permission:0', 'feature:horaires']);
+    Route::post('/timesheet/submit', [TimesheetController::class, 'submit'])->name('timesheet.submit')->middleware(['permission:0', 'feature:horaires']);
+    Route::post('/timesheet/decide', [TimesheetController::class, 'decide'])->name('timesheet.decide')->middleware(['permission:13', 'feature:horaires']);
+    Route::get('/timesheet/print', [TimesheetController::class, 'print'])->name('timesheet.print')->middleware(['permission:0', 'feature:horaires']);
     Route::get('/admin/monitoring', [AdminController::class, 'monitoring'])->name('admin.monitoring')->middleware('permission:49');
     // Diagnostics — deliberately trigger an issue to verify the observability
     // pipeline (error tracking, error/performance canaux) end to end.

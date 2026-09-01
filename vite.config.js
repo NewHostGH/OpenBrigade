@@ -26,6 +26,7 @@ export default defineConfig({
                 'resources/js/ob-calendar.js',
                 'resources/js/ob-section-planning.js',
                 'resources/js/ob-availability.js',
+                'resources/js/ob-timesheet.js',
             ],
             refresh: true,
         }),
