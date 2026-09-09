@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\SectionScopeService;
+use App\Services\WorkAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,7 +36,10 @@ class TimesheetController extends Controller
 
     private const STATUS_REJECTED = 'REJ';  // Rejetés
 
-    public function __construct(private readonly SectionScopeService $scope) {}
+    public function __construct(
+        private readonly SectionScopeService $scope,
+        private readonly WorkAvailabilityService $coherence,
+    ) {}
 
     public function index(Request $request): View
     {
@@ -177,6 +181,12 @@ class TimesheetController extends Controller
                 'H_DUREE_MINUTES2' => $overtime,
                 'ASA' => 0,
                 'H_COMMENT' => $comment !== '' ? $comment : null,
+            ]);
+
+            // Worked hours can't also be declared as available.
+            $this->coherence->syncWorkedDay((int) $person->P_ID, $date, [
+                [$day['debut1'] ?? null, $day['fin1'] ?? null],
+                [$day['debut2'] ?? null, $day['fin2'] ?? null],
             ]);
         }
 

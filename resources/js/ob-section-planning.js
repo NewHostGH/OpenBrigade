@@ -21,18 +21,29 @@ function mount(el) {
         return;
     }
 
-    // Optional "print selected" link kept in sync with the selection.
-    const printLink = el.dataset.print ? document.querySelector(el.dataset.print) : null;
-    const printBase = printLink ? printLink.getAttribute('href') : null;
+    // Selection-aware links (print / XLS / CSV) kept in sync with the checked
+    // people, each preserving its own base href.
+    const selectionLinks = Array.from(document.querySelectorAll('[data-sp-selection-link]'))
+        .map((link) => ({ link, base: link.getAttribute('href') }));
+
+    // The displayed month lives only in FullCalendar; carry it onto the export
+    // and print links so they match what the user is looking at.
+    let viewDate = null;
 
     function syncPrintLink() {
-        if (!printLink || !printBase) {
+        if (selectionLinks.length === 0) {
             return;
         }
         const params = new URLSearchParams();
+        if (viewDate) {
+            params.set('year', String(viewDate.getFullYear()));
+            params.set('month', String(viewDate.getMonth() + 1));
+        }
         selectedIds(filterRoot).forEach((id) => params.append('people[]', id));
         const qs = params.toString();
-        printLink.setAttribute('href', qs ? `${printBase}?${qs}` : printBase);
+        selectionLinks.forEach(({ link, base }) => {
+            link.setAttribute('href', qs ? `${base}?${qs}` : base);
+        });
     }
 
     const calendar = new Calendar(el, {
@@ -65,6 +76,12 @@ function mount(el) {
                 info.jsEvent.preventDefault();
                 window.location.href = info.event.url;
             }
+        },
+        datesSet() {
+            // getDate() returns the calendar's current anchor date, whose month
+            // is the one being displayed in month view.
+            viewDate = calendar.getDate();
+            syncPrintLink();
         },
     });
 

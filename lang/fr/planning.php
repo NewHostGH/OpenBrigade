@@ -40,6 +40,11 @@ return [
     'pending' => 'En attente',
 
     // Export imprimable / PDF
+    'export_xls_title' => 'Exporter le planning du mois (Excel)',
+    'export_csv_title' => 'Exporter le planning du mois (CSV)',
+    'export_col_lastname' => 'Nom',
+    'export_col_firstname' => 'Prénom',
+    'export_col_section' => 'Section',
     'export_pdf_title' => 'Version imprimable / PDF du mois',
     'print_btn' => 'Imprimer / PDF',
     'print_heading' => 'Mon planning',

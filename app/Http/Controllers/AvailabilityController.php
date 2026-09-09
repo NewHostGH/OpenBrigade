@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\GeneralSettingService;
 use App\Services\SectionScopeService;
+use App\Services\WorkAvailabilityService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class AvailabilityController extends Controller
     public function __construct(
         private readonly SectionScopeService $scope,
         private readonly GeneralSettingService $settings,
+        private readonly WorkAvailabilityService $coherence,
     ) {}
 
     public function index(Request $request): View
@@ -95,11 +97,15 @@ class AvailabilityController extends Controller
             ];
         }
 
+        // Slots locked because the person is absent, resting or already working.
+        $blocked = $this->coherence->blockedMap($pids, $first->toDateString(), $end->toDateString());
+
         return [
             'personnel' => $personnel,
             'periods' => $periods,
             'periodMap' => $periods->keyBy('DP_ID'),
             'byPersonDate' => $byPersonDate,
+            'blocked' => $blocked,
             'days' => $days,
             'first' => $first,
             'end' => $end,
@@ -123,16 +129,25 @@ class AvailabilityController extends Controller
         ]);
 
         $pid = (int) auth()->user()->P_ID;
-        $keys = ['P_ID' => $pid, 'D_DATE' => $validated['date'], 'PERIOD_ID' => (int) $validated['period']];
+        $period = (int) $validated['period'];
+        $keys = ['P_ID' => $pid, 'D_DATE' => $validated['date'], 'PERIOD_ID' => $period];
 
         $exists = DB::table('disponibilite')->where($keys)->exists();
         if ($exists) {
             DB::table('disponibilite')->where($keys)->delete();
-        } else {
-            DB::table('disponibilite')->insert($keys);
+
+            return response()->json(['available' => false]);
         }
 
-        return response()->json(['available' => ! $exists]);
+        // Can't declare available for a slot you're absent, resting or working.
+        $blocked = $this->coherence->blockedMap([$pid], $validated['date'], $validated['date']);
+        if (! empty($blocked[$pid][$validated['date']][$period])) {
+            return response()->json(['available' => false, 'blocked' => true], 422);
+        }
+
+        DB::table('disponibilite')->insert($keys);
+
+        return response()->json(['available' => true]);
     }
 
     /**

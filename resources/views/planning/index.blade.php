@@ -13,10 +13,22 @@
 <div class="ob-toolbar mx-3 mt-3">
     <div class="ob-toolbar-title">
         <h1>{{ __('planning.title') }}</h1>
-        <a href="{{ route('planning.print') }}" id="planning-print-link" target="_blank"
-           class="btn btn-sm btn-outline-secondary ms-auto" title="{{ __('planning.export_pdf_title') }}">
-            <i class="fas fa-file-pdf me-1"></i> PDF
-        </a>
+        <div class="ms-auto d-flex gap-2">
+            @if($canSeeOthers)
+                <a href="{{ route('planning.export.xls') }}" data-sp-selection-link
+                   class="btn btn-sm btn-outline-secondary" title="{{ __('planning.export_xls_title') }}">
+                    <i class="fas fa-file-excel me-1"></i> XLS
+                </a>
+                <a href="{{ route('planning.export.csv') }}" data-sp-selection-link
+                   class="btn btn-sm btn-outline-secondary" title="{{ __('planning.export_csv_title') }}">
+                    <i class="fas fa-file-csv me-1"></i> CSV
+                </a>
+            @endif
+            <a href="{{ route('planning.print') }}" id="planning-print-link" data-sp-selection-link target="_blank"
+               class="btn btn-sm btn-outline-secondary" title="{{ __('planning.export_pdf_title') }}">
+                <i class="fas fa-file-pdf me-1"></i> PDF
+            </a>
+        </div>
     </div>
     @if($canSeeOthers)
         @feature('multi_site')

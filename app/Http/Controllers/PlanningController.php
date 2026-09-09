@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Services\SectionScopeService;
+use App\Services\TableExportService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PlanningController extends Controller
 {
@@ -121,7 +123,8 @@ class PlanningController extends Controller
         $absences = DB::table('indisponibilite as i')
             ->leftJoin('type_indisponibilite as ti', 'i.TI_CODE', '=', 'ti.TI_CODE')
             ->whereIn('i.P_ID', $pids)
-            ->where('i.I_CANCEL', 0)
+            ->whereNull('i.I_CANCEL')
+            ->whereNotIn('i.I_STATUS', ['REF', 'ANN'])
             ->where(function ($q) use ($from, $to) {
                 $q->whereBetween('i.I_DEBUT', [$from, $to])
                     ->orWhereBetween('i.I_FIN', [$from, $to])
@@ -238,7 +241,8 @@ class PlanningController extends Controller
         $absencesByPid = DB::table('indisponibilite as i')
             ->leftJoin('type_indisponibilite as ti', 'i.TI_CODE', '=', 'ti.TI_CODE')
             ->whereIn('i.P_ID', $pids)
-            ->where('i.I_CANCEL', 0)
+            ->whereNull('i.I_CANCEL')
+            ->whereNotIn('i.I_STATUS', ['REF', 'ANN'])
             ->where(function ($q) use ($first, $last) {
                 $q->whereBetween('i.I_DEBUT', [$first->toDateString(), $last->toDateString()])
                     ->orWhereBetween('i.I_FIN', [$first->toDateString(), $last->toDateString()])
@@ -261,5 +265,132 @@ class PlanningController extends Controller
         ]);
 
         return view('planning.print', compact('people', 'first', 'year', 'month'));
+    }
+
+    /** Monthly planning matrix (personnel × days) as an XLSX download. */
+    public function exportXls(Request $request, TableExportService $export): StreamedResponse
+    {
+        [$columns, $items, $filename] = $this->matrix($request);
+
+        return $export->toXlsx($columns, $items, $filename, [
+            'sheetTitle' => __('planning.title'),
+            'freezeHeader' => true,
+            'repeatHeader' => true,
+        ]);
+    }
+
+    /** Monthly planning matrix (personnel × days) as a CSV download. */
+    public function exportCsv(Request $request, TableExportService $export): StreamedResponse
+    {
+        [$columns, $items, $filename] = $this->matrix($request);
+
+        return $export->toCsv($columns, $items, $filename);
+    }
+
+    /**
+     * Build the monthly personnel × days matrix for export. Each row is a person
+     * (Nom, Prénom, Section) followed by one cell per day of the month holding an
+     * accepted-absence code, else the number of activities that day, else blank.
+     * Scope follows the calendar: the people[] selection intersected with the
+     * viewer's visible set (all visible when none selected), plus ?section= /
+     * ?year= / ?month=.
+     *
+     * @return array{0: array<int, array{0: string, 1: callable}>, 1: Collection<int, object>, 2: string}
+     */
+    private function matrix(Request $request): array
+    {
+        $year = (int) $request->integer('year', now()->year);
+        $month = (int) $request->integer('month', now()->month);
+        if ($month < 1) {
+            $month = 12;
+            $year--;
+        }
+        if ($month > 12) {
+            $month = 1;
+            $year++;
+        }
+
+        $first = Carbon::create($year, $month, 1)->startOfDay();
+        $last = $first->copy()->endOfMonth();
+        $daysInMonth = (int) $last->day;
+
+        $visible = $this->visiblePersonnel($request)->keyBy(fn ($p) => (int) $p->P_ID);
+        $requested = array_filter(array_map('intval', (array) $request->query('people', [])));
+        $pids = $requested
+            ? array_values(array_intersect($requested, $visible->keys()->all()))
+            : $visible->keys()->all();
+
+        // Personnel rows with their section code, in the visible order.
+        $rows = collect();
+        if (! empty($pids)) {
+            $rows = DB::table('pompier as p')
+                ->leftJoin('section as s', 'p.P_SECTION', '=', 's.S_ID')
+                ->whereIn('p.P_ID', $pids)
+                ->orderBy('p.P_NOM')
+                ->orderBy('p.P_PRENOM')
+                ->get(['p.P_ID', 'p.P_NOM', 'p.P_PRENOM', 's.S_CODE']);
+        }
+
+        // Activities per person per day (excluding main-courante and cancelled).
+        $activity = [];
+        if (! empty($pids)) {
+            foreach (DB::table('evenement_participation as ep')
+                ->join('evenement as e', 'ep.E_CODE', '=', 'e.E_CODE')
+                ->join('evenement_horaire as eh', function ($j) {
+                    $j->on('eh.E_CODE', '=', 'ep.E_CODE')->on('eh.EH_ID', '=', 'ep.EH_ID');
+                })
+                ->whereIn('ep.P_ID', $pids)
+                ->where('ep.EP_ABSENT', 0)
+                ->where('e.E_CANCELED', 0)
+                ->where('e.TE_CODE', '<>', 'MC')
+                ->whereBetween('eh.EH_DATE_DEBUT', [$first->toDateString(), $last->toDateString()])
+                ->groupBy('ep.P_ID', 'day')
+                ->select('ep.P_ID', DB::raw('DAY(eh.EH_DATE_DEBUT) as day'), DB::raw('COUNT(*) as nb'))
+                ->get() as $r) {
+                $activity[(int) $r->P_ID][(int) $r->day] = (int) $r->nb;
+            }
+        }
+
+        // Accepted absences → a code stamped on every covered day.
+        $absence = [];
+        if (! empty($pids)) {
+            foreach (DB::table('indisponibilite as i')
+                ->whereIn('i.P_ID', $pids)
+                ->whereNull('i.I_CANCEL')
+                ->where('i.I_STATUS', 'VAL')
+                ->where('i.I_DEBUT', '<=', $last->toDateString())
+                ->where('i.I_FIN', '>=', $first->toDateString())
+                ->get(['i.P_ID', 'i.I_DEBUT', 'i.I_FIN', 'i.TI_CODE']) as $a) {
+                $start = Carbon::parse($a->I_DEBUT)->max($first);
+                $end = Carbon::parse($a->I_FIN ?: $a->I_DEBUT)->min($last);
+                for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
+                    $absence[(int) $a->P_ID][(int) $d->day] = $a->TI_CODE ?: 'ABS';
+                }
+            }
+        }
+
+        // Attach the per-day cell map to each person row.
+        $rows->each(function ($p) use ($activity, $absence, $daysInMonth): void {
+            $pid = (int) $p->P_ID;
+            $days = [];
+            for ($d = 1; $d <= $daysInMonth; $d++) {
+                $days[$d] = $absence[$pid][$d]
+                    ?? (! empty($activity[$pid][$d]) ? (string) $activity[$pid][$d] : '');
+            }
+            $p->days = $days;
+        });
+
+        $columns = [
+            [__('planning.export_col_lastname'), fn ($p) => strtoupper((string) $p->P_NOM)],
+            [__('planning.export_col_firstname'), fn ($p) => $p->P_PRENOM],
+            [__('planning.export_col_section'), fn ($p) => $p->S_CODE],
+        ];
+        for ($d = 1; $d <= $daysInMonth; $d++) {
+            $columns[] = [(string) $d, fn ($p) => $p->days[$d] ?? ''];
+        }
+
+        $filename = 'planning-'.$first->format('Y-m');
+
+        return [$columns, $rows, $filename];
     }
 }

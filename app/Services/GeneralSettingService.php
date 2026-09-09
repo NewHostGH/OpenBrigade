@@ -34,6 +34,13 @@ class GeneralSettingService
         'ameliorations' => 0,
         'auto_optimize' => 0,
         'dispo_periodes' => 4,
+        'repos_auto_enable' => 1,
+        'repos_postgarde' => 1,
+        'repos_postgarde_scope' => 'full',
+        'repos_halfday_shift' => 0,
+        'repos_timesheet_threshold_min' => 0,
+        'repos_min_rest_days' => 0,
+        'repos_min_rest_days_week' => 0,
     ];
 
     /** @var array<string,string>|null */
