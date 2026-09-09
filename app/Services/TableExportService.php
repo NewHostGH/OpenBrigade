@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -92,14 +93,14 @@ class TableExportService
 
         // Header row
         foreach ($columns as $i => [$label]) {
-            $letter = chr(65 + $i);
+            $letter = Coordinate::stringFromColumnIndex($i + 1);
             $sheet->setCellValue($letter.'1', $label);
             $sheet->getColumnDimension($letter)->setAutoSize(true);
             $sheet->getStyle($letter.'1')->getFont()->setBold(true);
         }
 
         if ($colCount > 0) {
-            $range = 'A1:'.chr(65 + $colCount - 1).'1';
+            $range = 'A1:'.Coordinate::stringFromColumnIndex($colCount).'1';
             $sheet->getStyle($range)
                 ->getFill()->setFillType(Fill::FILL_SOLID)
                 ->getStartColor()->setRGB($headerRgb);

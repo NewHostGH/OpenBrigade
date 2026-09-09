@@ -219,6 +219,22 @@
                                                     </button>
                                                 </form>
 
+                                            @elseif($row->ID == 146)
+                                                {{-- Repos: post-garde rest duration --}}
+                                                <form method="POST" action="{{ route('admin.settings.save', $row->ID) }}"
+                                                      class="d-flex gap-2 align-items-center">
+                                                    @csrf @method('PATCH')
+                                                    <input type="hidden" name="_tab" value="{{ $tabId }}">
+                                                    <select name="VALUE" class="form-select form-select-sm" style="max-width:320px;">
+                                                        <option value="full" @selected($row->VALUE=='full')>{{ __('admin.settings.repos_scope_full') }}</option>
+                                                        <option value="jour" @selected($row->VALUE=='jour')>{{ __('admin.settings.repos_scope_jour') }}</option>
+                                                        <option value="nuit" @selected($row->VALUE=='nuit')>{{ __('admin.settings.repos_scope_nuit') }}</option>
+                                                    </select>
+                                                    <button type="submit" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-save"></i>
+                                                    </button>
+                                                </form>
+
                                             @elseif($row->ID == 44)
                                                 {{-- Encryption method --}}
                                                 <form method="POST" action="{{ route('admin.settings.save', $row->ID) }}"

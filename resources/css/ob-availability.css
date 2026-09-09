@@ -113,6 +113,21 @@
     color: #fff;
 }
 
+/* Locked slot: absent, resting or already working — can't be declared available. */
+.ob-av-slot.is-blocked {
+    background: repeating-linear-gradient(
+        45deg,
+        color-mix(in srgb, var(--bs-danger, #dc3545) 12%, transparent),
+        color-mix(in srgb, var(--bs-danger, #dc3545) 12%, transparent) 3px,
+        transparent 3px,
+        transparent 6px
+    );
+    border-color: color-mix(in srgb, var(--bs-danger, #dc3545) 35%, transparent);
+    color: var(--bs-danger, #dc3545);
+    cursor: not-allowed;
+    font-size: 0.6rem;
+}
+
 /* Hide interactivity when printing; show only "on" slots and badges */
 @media print {
     .ob-av-slot {

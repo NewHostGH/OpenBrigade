@@ -35,6 +35,7 @@ use App\Http\Controllers\PlanningController;
 use App\Http\Controllers\PluginController;
 use App\Http\Controllers\ReferenceController;
 use App\Http\Controllers\ReplacementController;
+use App\Http\Controllers\ReposController;
 use App\Http\Controllers\SetupController;
 use App\Http\Controllers\ShortcutController;
 use App\Http\Controllers\SmsHistoryController;
@@ -171,7 +172,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/garde/types', [DutyTypeController::class, 'store'])->name('duty.types.store')->middleware('permission:5');
     Route::patch('/garde/types/{id}', [DutyTypeController::class, 'update'])->name('duty.types.update')->middleware('permission:5');
     Route::delete('/garde/types/{id}', [DutyTypeController::class, 'destroy'])->name('duty.types.destroy')->middleware('permission:5');
-    Route::get('/unavailability', [UnavailabilityController::class, 'index'])->name('unavailability.index')->middleware('permission:11');
+    Route::get('/unavailability', [UnavailabilityController::class, 'index'])->name('unavailability.index')->middleware(['permission:11', 'feature:disponibilites']);
+    Route::get('/unavailability/create', [UnavailabilityController::class, 'create'])->name('unavailability.create')->middleware(['permission:11', 'feature:disponibilites']);
+    Route::post('/unavailability', [UnavailabilityController::class, 'store'])->name('unavailability.store')->middleware(['permission:11', 'feature:disponibilites']);
+    Route::post('/unavailability/{code}/decide', [UnavailabilityController::class, 'decide'])->name('unavailability.decide')->middleware(['permission:12', 'feature:disponibilites'])->whereNumber('code');
+    Route::post('/unavailability/{code}/cancel', [UnavailabilityController::class, 'cancel'])->name('unavailability.cancel')->middleware(['permission:11', 'feature:disponibilites'])->whereNumber('code');
+    // Repos (régime de travail mixte) — monthly Jour/Nuit half-day rest grid.
+    Route::get('/rest', [ReposController::class, 'index'])->name('repos.index')->middleware(['permission:0', 'feature:disponibilites']);
+    Route::post('/rest', [ReposController::class, 'save'])->name('repos.save')->middleware(['permission:0', 'feature:disponibilites']);
     Route::get('/replacements', [ReplacementController::class, 'index'])->name('replacement.index')->middleware(['permission:0', 'feature:remplacements']);
     Route::get('/replacements/export/xls', [ReplacementController::class, 'exportXls'])->name('replacement.export.xls')->middleware(['permission:0', 'feature:remplacements']);
     Route::get('/replacements/export/csv', [ReplacementController::class, 'exportCsv'])->name('replacement.export.csv')->middleware(['permission:0', 'feature:remplacements']);
@@ -349,6 +357,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/calendar', [PlanningController::class, 'index'])->name('planning.index')->middleware('permission:0');
     Route::get('/calendar/events', [PlanningController::class, 'events'])->name('planning.events')->middleware('permission:0');
     Route::get('/calendar/print', [PlanningController::class, 'print'])->name('planning.print')->middleware('permission:0');
+    // Planning exports — monthly personnel × days matrix (managers only).
+    Route::get('/calendar/export/xls', [PlanningController::class, 'exportXls'])->name('planning.export.xls')->middleware('permission:56');
+    Route::get('/calendar/export/csv', [PlanningController::class, 'exportCsv'])->name('planning.export.csv')->middleware('permission:56');
     Route::middleware('feature:vehicules')->group(function () {
         Route::get('/vehicles', [VehicleController::class, 'index'])->name('vehicle.index')->middleware('permission:42');
         // List exports (static segments before the {vehicle} wildcard).

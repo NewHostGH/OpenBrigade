@@ -423,7 +423,9 @@ class AdminController extends Controller
         // Settings that only make sense while their feature is enabled.
         // 47 = "Période de disponibilité" (depends on the disponibilites feature).
         $features = app(FeatureService::class);
-        $featureDependent = $features->isEnabled('disponibilites') ? [] : [47];
+        // Availability + repos settings (dispo periods and the repos engine)
+        // only make sense while the disponibilités feature is enabled.
+        $featureDependent = $features->isEnabled('disponibilites') ? [] : [47, 144, 145, 146, 147, 148, 149, 150];
 
         $rows = DB::table('configuration')
             ->where('HIDDEN', 0)

@@ -31,7 +31,7 @@ class NavigationService
                 continue;
             }
 
-            if (isset($group['feature']) && ! $this->features->isEnabled($group['feature'])) {
+            if (! $this->featureOk($group)) {
                 continue;
             }
 
@@ -128,7 +128,7 @@ class NavigationService
                 if (isset($item['permission']) && ! $this->can($user, $item['permission'])) {
                     continue;
                 }
-                if (isset($item['feature']) && ! $this->features->isEnabled($item['feature'])) {
+                if (! $this->featureOk($item)) {
                     continue;
                 }
                 $map[$item['key']] = [
@@ -195,7 +195,7 @@ class NavigationService
                 continue;
             }
 
-            if (isset($item['feature']) && ! $this->features->isEnabled($item['feature'])) {
+            if (! $this->featureOk($item)) {
                 continue;
             }
 
@@ -242,5 +242,31 @@ class NavigationService
     private function can(?User $user, int $permission): bool
     {
         return $user !== null && $user->hasPermission($permission);
+    }
+
+    /**
+     * Feature gate for a nav node. `feature` requires that flag (AND); optional
+     * `feature_any` requires at least one of a list of flags (OR). Both apply
+     * when both are present.
+     *
+     * @param  array<string, mixed>  $node
+     */
+    private function featureOk(array $node): bool
+    {
+        if (isset($node['feature']) && ! $this->features->isEnabled($node['feature'])) {
+            return false;
+        }
+
+        if (isset($node['feature_any'])) {
+            foreach ((array) $node['feature_any'] as $flag) {
+                if ($this->features->isEnabled($flag)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return true;
     }
 }

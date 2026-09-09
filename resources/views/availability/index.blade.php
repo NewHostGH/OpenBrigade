@@ -12,6 +12,7 @@
         $periodColor[$per->DP_ID] = $palette[$i % count($palette)];
     }
     $showFilter = $canSeeOthers && $personnel->count() > 1;
+    $blocked = $blocked ?? [];
 @endphp
 
 <x-ob-breadcrumb :items="[
@@ -120,12 +121,21 @@
                                 <td class="ob-sp-cell {{ $day['isWeekend'] ? 'ob-sp-weekend' : '' }} {{ $day['isToday'] ? 'ob-sp-today' : '' }}">
                                     @if($isSelf && ! $day['isPast'])
                                         @foreach($periods as $per)
-                                            @php $on = in_array($per->DP_ID, $slots); @endphp
-                                            <button type="button"
-                                                    class="ob-av-slot {{ $on ? 'is-on' : '' }}"
-                                                    data-av-slot data-date="{{ $day['key'] }}" data-period="{{ $per->DP_ID }}"
-                                                    style="--slot-color:{{ $periodColor[$per->DP_ID] ?? '#64748b' }}"
-                                                    title="{{ $per->DP_NAME }}">{{ mb_substr($per->DP_NAME, 0, 1) }}</button>
+                                            @php
+                                                $on = in_array($per->DP_ID, $slots);
+                                                $isBlocked = ! empty($blocked[$p->P_ID][$day['key']][$per->DP_ID]);
+                                            @endphp
+                                            @if($isBlocked)
+                                                <span class="ob-av-slot is-blocked" title="{{ __('availability.slot_blocked') }}">
+                                                    <i class="fas fa-lock"></i>
+                                                </span>
+                                            @else
+                                                <button type="button"
+                                                        class="ob-av-slot {{ $on ? 'is-on' : '' }}"
+                                                        data-av-slot data-date="{{ $day['key'] }}" data-period="{{ $per->DP_ID }}"
+                                                        style="--slot-color:{{ $periodColor[$per->DP_ID] ?? '#64748b' }}"
+                                                        title="{{ $per->DP_NAME }}">{{ mb_substr($per->DP_NAME, 0, 1) }}</button>
+                                            @endif
                                         @endforeach
                                     @else
                                         @foreach($slots as $periodId)

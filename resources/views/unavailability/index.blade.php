@@ -34,11 +34,14 @@
     :columns="$columns"
     table-id="indispoTable">
 
-    {{-- TODO: Migrate code --}}
-    <a href="{{ url('/legacy/indispo_choice.php') }}" class="btn btn-sm btn-primary">
-        <i class="fas fa-plus me-1"></i> Déclarer une absence
+    <a href="{{ route('unavailability.create') }}" class="btn btn-sm btn-primary">
+        <i class="fas fa-plus me-1"></i> {{ __('unavailability.declare_absence') }}
     </a>
 </x-ob-toolbar>
+
+@if(session('status'))
+    <div class="mx-3 mt-2"><div class="alert alert-success py-2 mb-0">{{ session('status') }}</div></div>
+@endif
 
 <x-ob-commandbar table-id="indispoTable" :total="$items->total()" total-label="indisponibilité">
     <x-ob-table
