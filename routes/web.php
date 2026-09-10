@@ -165,7 +165,10 @@ Route::middleware('auth')->group(function () {
     Route::redirect('/duty', '/duty/weekly');
     Route::get('/duty/today', [DutyController::class, 'today'])->name('duty.today')->middleware('permission:61');
     Route::get('/duty/weekly', [DutyController::class, 'index'])->name('duty.index')->middleware('permission:61');
+    Route::get('/duty/calendar', [DutyController::class, 'calendar'])->name('duty.calendar')->middleware('permission:61');
+    Route::get('/duty/calendar/events', [DutyController::class, 'calendarEvents'])->name('duty.calendar.events')->middleware('permission:61');
     Route::get('/duty/monthly', [DutyController::class, 'onCall'])->name('duty.on-call')->middleware('permission:52');
+    Route::get('/duty/monthly/print', [DutyController::class, 'printOnCall'])->name('duty.on-call.print')->middleware('permission:52');
     Route::get('/duty/monthly/export/xls', [DutyController::class, 'exportOnCallXls'])->name('duty.on-call.export.xls')->middleware('permission:52');
     Route::get('/duty/monthly/export/csv', [DutyController::class, 'exportOnCallCsv'])->name('duty.on-call.export.csv')->middleware('permission:52');
     Route::get('/garde/types', [DutyTypeController::class, 'index'])->name('duty.types.index')->middleware('permission:5');

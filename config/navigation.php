@@ -52,9 +52,10 @@ return [
             'label' => 'Garde',
             'icon' => 'clipboard-list',
             'items' => [
-                ['key' => 'duty.today',   'label' => 'Garde du jour',       'url' => '/duty/today',   'icon' => 'calendar-day',   'permission' => 61],
-                ['key' => 'duty.board',   'label' => 'Garde de la semaine', 'url' => '/duty/weekly',   'icon' => 'calendar-week',  'permission' => 61],
-                ['key' => 'duty.on-call', 'label' => 'Garde du mois',       'url' => '/duty/monthly', 'icon' => 'calendar-alt',   'permission' => 52],
+                ['key' => 'duty.today',    'label' => 'Garde du jour',       'url' => '/duty/today',    'icon' => 'calendar-day',   'permission' => 61],
+                ['key' => 'duty.board',    'label' => 'Garde de la semaine', 'url' => '/duty/weekly',   'icon' => 'calendar-week',  'permission' => 61],
+                ['key' => 'duty.on-call',  'label' => 'Garde du mois',       'url' => '/duty/monthly',  'icon' => 'calendar-alt',   'permission' => 52],
+                ['key' => 'duty.calendar', 'label' => 'Calendrier',          'url' => '/duty/calendar', 'icon' => 'calendar',       'permission' => 61],
             ],
         ],
 
