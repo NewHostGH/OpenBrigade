@@ -37,6 +37,12 @@ return [
 
     // ── Widget : À propos ───────────────────────────────────────────────────
 
+    'agenda' => [
+        'title' => 'Agenda',
+        'open_calendar' => 'Ouvrir le calendrier',
+        'empty' => 'Aucun événement à venir.',
+    ],
+
     'about' => [
         'title' => 'À propos',
         'doc_online' => 'Documentation en ligne',
