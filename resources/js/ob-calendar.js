@@ -24,18 +24,25 @@ function mount(el) {
         return;
     }
 
+    // Compact mode (e.g. the dashboard agenda widget): a trimmed toolbar and a
+    // fixed height, so the calendar sits neatly inside a small card.
+    const compact = el.dataset.compact !== undefined;
+
     const calendar = new Calendar(el, {
         plugins: [dayGridPlugin, listPlugin, interactionPlugin],
         locale: frLocale,
         initialView: el.dataset.initialView || 'dayGridMonth',
         initialDate: el.dataset.initialDate || undefined,
-        height: 'auto',
+        height: el.dataset.height ? Number(el.dataset.height) : 'auto',
         firstDay: 1,
-        headerToolbar: {
-            left: 'prev,next today',
-            center: 'title',
-            right: 'dayGridMonth,listMonth',
-        },
+        headerToolbar: compact
+            ? { left: 'prev,next', center: 'title', right: 'today' }
+            : {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,listMonth',
+            },
+        noEventsContent: el.dataset.emptyText || undefined,
         buttonText: { today: "Aujourd'hui", month: 'Mois', list: 'Liste' },
         // Render timed events as full blocks showing the start–end range.
         eventDisplay: 'block',

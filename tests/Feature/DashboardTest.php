@@ -198,3 +198,19 @@ test('password expiry warning banner is shown when service returns expiry data',
 
     $this->actingAs($user)->get('/dashboard')->assertSee('3 jours');
 });
+
+// ── Agenda widget (#17) ──────────────────────────────────────────────────────
+
+test('the agenda widget is registered with a label and a default position', function () {
+    $keys = array_column(DashboardService::WIDGET_DEFAULTS, 'key');
+
+    expect($keys)->toContain('agenda');
+    expect(DashboardService::WIDGET_LABELS)->toHaveKey('agenda');
+
+    // Default positions within a column must stay unique.
+    foreach ([1, 2, 3] as $col) {
+        $positions = collect(DashboardService::WIDGET_DEFAULTS)
+            ->where('col', $col)->pluck('position')->all();
+        expect($positions)->toEqual(array_unique($positions));
+    }
+});
