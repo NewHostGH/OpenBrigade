@@ -19,6 +19,12 @@ return [
     'period_day' => 'Jour',
     'period_week' => 'Semaine',
     'period_month' => 'Mois',
+    'period_calendar' => 'Calendrier',
+
+    // Calendrier des gardes
+    'title_calendar' => 'Calendrier des gardes',
+    'calendar_all_sections' => 'Toutes mes sections',
+    'calendar_empty' => 'Aucune astreinte sur cette période.',
 
     // Garde du jour
     'today_heading' => 'Garde du jour',

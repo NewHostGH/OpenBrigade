@@ -6,15 +6,74 @@ use App\Services\SectionScopeService;
 use App\Services\TableExportService;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class DutyController extends Controller
 {
+    /** Per-role colour palette for the calendar (assigned by GP_ID). */
+    private const ROLE_PALETTE = [
+        '#2563eb', '#16a34a', '#d97706', '#7c3aed', '#0891b2',
+        '#dc2626', '#db2777', '#4f46e5', '#ca8a04', '#0d9488',
+    ];
+
     public function __construct(
         private readonly SectionScopeService $sectionScope,
     ) {}
+
+    /**
+     * On-call roster as a month calendar (FullCalendar). Astreinte slots are
+     * fetched from {@see self::calendarEvents()} and coloured per role.
+     */
+    public function calendar(Request $request): View
+    {
+        return view('duty.calendar', [
+            'sectionId' => $this->sectionScope->sectionFilter($request),
+        ]);
+    }
+
+    /**
+     * FullCalendar events feed — section-scoped astreinte slots overlapping the
+     * requested range (FullCalendar appends ?start=&end=), coloured per role.
+     */
+    public function calendarEvents(Request $request): JsonResponse
+    {
+        $from = $request->query('start')
+            ? Carbon::parse($request->query('start'))->toDateTimeString()
+            : now()->startOfMonth()->toDateTimeString();
+        $to = $request->query('end')
+            ? Carbon::parse($request->query('end'))->toDateTimeString()
+            : now()->endOfMonth()->toDateTimeString();
+
+        $query = DB::table('astreinte as a')
+            ->join('pompier as p', 'a.P_ID', '=', 'p.P_ID')
+            ->join('groupe as g', 'a.GP_ID', '=', 'g.GP_ID')
+            ->where('a.AS_DEBUT', '<=', $to)
+            ->where('a.AS_FIN', '>=', $from)
+            ->orderBy('a.AS_DEBUT')
+            ->select(
+                'a.AS_ID', 'a.AS_DEBUT', 'a.AS_FIN',
+                'p.P_NOM', 'p.P_PRENOM', 'g.GP_ID', 'g.GP_DESCRIPTION'
+            );
+
+        $this->sectionScope->apply($query, 'a.S_ID', $this->sectionScope->sectionFilter($request));
+
+        $events = $query->get()->map(function ($s) {
+            $color = self::ROLE_PALETTE[(int) $s->GP_ID % count(self::ROLE_PALETTE)];
+            $name = strtoupper($s->P_NOM).' '.$s->P_PRENOM;
+
+            return [
+                'title' => $s->GP_DESCRIPTION ? $s->GP_DESCRIPTION.' · '.$name : $name,
+                'start' => Carbon::parse($s->AS_DEBUT)->toIso8601String(),
+                'end' => Carbon::parse($s->AS_FIN)->toIso8601String(),
+                'color' => $color,
+            ];
+        });
+
+        return response()->json($events);
+    }
 
     /**
      * On-call roster (tableau de garde) for a given week.

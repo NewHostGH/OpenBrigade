@@ -178,3 +178,19 @@ test('authenticated users can view the garde du jour', function () {
         ->assertSee('Paul DURAND')
         ->assertSee('Chef de garde');
 });
+
+// ── Garde calendar (#20) ─────────────────────────────────────────────────────
+
+test('the garde calendar routes are registered', function () {
+    expect(route('duty.calendar'))->toContain('/duty/calendar');
+    expect(route('duty.calendar.events'))->toContain('/duty/calendar/events');
+});
+
+test('unauthenticated users are redirected from the garde calendar to login', function () {
+    $this->get('/duty/calendar')->assertRedirect('/login');
+    $this->get('/duty/calendar/events')->assertRedirect('/login');
+});
+
+test('the on-call print route is registered (the monthly view links to it)', function () {
+    expect(route('duty.on-call.print'))->toContain('/duty/monthly/print');
+});

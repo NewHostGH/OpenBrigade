@@ -15,4 +15,8 @@
        class="btn {{ $active === 'month' ? 'btn-primary' : 'btn-outline-secondary' }}">
         <i class="fas fa-calendar-alt me-1"></i>{{ __('duty.period_month') }}
     </a>
+    <a href="{{ route('duty.calendar') }}"
+       class="btn {{ $active === 'calendar' ? 'btn-primary' : 'btn-outline-secondary' }}">
+        <i class="fas fa-calendar me-1"></i>{{ __('duty.period_calendar') }}
+    </a>
 </div>
