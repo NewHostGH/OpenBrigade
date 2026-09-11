@@ -145,6 +145,7 @@ Route::middleware('auth')->group(function () {
     // Reinforcement request (demande de renfort)
     Route::get('/events/{code}/renfort-request', [EventController::class, 'reinforcementRequest'])->name('event.renfort-request')->middleware('permission:0');
     Route::post('/events/{code}/renfort-request', [EventController::class, 'reinforcementRequestUpdate'])->name('event.renfort-request.update')->middleware('permission:15');
+    Route::post('/events/{code}/renfort-request/transmit', [EventController::class, 'reinforcementTransmit'])->name('event.renfort-request.transmit')->middleware('permission:15');
     // Event options — option groups, options, dropdown choices (permission 15)
     Route::post('/events/{code}/option-groups', [EventController::class, 'optionGroupStore'])->name('event.option-group.store')->middleware('permission:15');
     Route::patch('/events/{code}/option-groups/{groupId}', [EventController::class, 'optionGroupUpdate'])->name('event.option-group.update')->middleware('permission:15');

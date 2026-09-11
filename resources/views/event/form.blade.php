@@ -104,6 +104,33 @@
                                    maxlength="60" required autofocus>
                             @error('E_LIBELLE')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         </div>
+
+                        {{-- Renfort: attach to the main event (only while not attached) --}}
+                        @php $renfortType = \App\Http\Controllers\EventController::RENFORT_TYPE; @endphp
+                        <div class="col-12" data-renfort-parent data-renfort-type="{{ $renfortType }}"
+                             @if($val('TE_CODE') !== $renfortType) hidden @endif>
+                            @if($renfortParent)
+                                <div class="alert alert-info py-2 mb-0" style="font-size:var(--font-size-sm)">
+                                    <i class="fas fa-link me-1"></i>
+                                    {{ __('event.form_renfort_attached') }}
+                                    <a href="{{ route('event.show', $renfortParent->E_CODE) }}" class="fw-semibold">{{ $renfortParent->E_LIBELLE ?: $renfortParent->E_CODE }}</a>.
+                                    <span class="text-muted">{{ __('event.form_renfort_detach_hint') }}</span>
+                                </div>
+                            @else
+                                <label class="form-label fw-semibold" for="E_PARENT">{{ __('event.form_renfort_parent_label') }}</label>
+                                <select id="E_PARENT" name="E_PARENT"
+                                        class="form-select form-select-sm @error('E_PARENT') is-invalid @enderror"
+                                        @disabled($parentCandidates->isEmpty())>
+                                    <option value="">{{ __('event.form_renfort_parent_none') }}</option>
+                                    @foreach($parentCandidates as $c)
+                                        <option value="{{ $c->E_CODE }}" @selected((string) old('E_PARENT') === (string) $c->E_CODE)>{{ $c->label }}</option>
+                                    @endforeach
+                                </select>
+                                <small class="text-muted">
+                                    {{ $parentCandidates->isEmpty() ? __('event.form_renfort_parent_empty') : __('event.form_renfort_parent_hint') }}
+                                </small>
+                            @endif
+                        </div>
                     </div>
 
                     {{-- Localisation --}}

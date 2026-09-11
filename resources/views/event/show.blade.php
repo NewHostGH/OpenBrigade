@@ -1548,7 +1548,7 @@
 
 {{-- Add renfort --}}
 <div class="modal fade" id="addRenfortModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" style="font-size:var(--font-size-base)">{{ __('event.modal_add_renfort_title') }}</h5>
@@ -1560,13 +1560,31 @@
                     <label class="form-label" style="font-size:var(--font-size-sm)">
                         {{ __('event.renfort_number_label') }} <span class="text-danger">*</span>
                     </label>
-                    <input name="renfort" type="number" class="form-control form-control-sm"
-                           min="1" placeholder="{{ __('event.renfort_number_placeholder') }}" required>
-                    <div class="form-text mt-1">{{ __('event.renfort_number_help') }}</div>
+                    @php $hasCandidates = $renfortCandidates['renforts']->isNotEmpty() || $renfortCandidates['others']->isNotEmpty(); @endphp
+                    <select name="renfort" class="form-select form-select-sm" required @disabled(! $hasCandidates)>
+                        <option value="">{{ __('event.renfort_select_placeholder') }}</option>
+                        @if($renfortCandidates['renforts']->isNotEmpty())
+                            <optgroup label="{{ __('event.renfort_select_group_renforts') }}">
+                                @foreach($renfortCandidates['renforts'] as $c)
+                                    <option value="{{ $c->E_CODE }}">{{ $c->label }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endif
+                        @if($renfortCandidates['others']->isNotEmpty())
+                            <optgroup label="{{ __('event.renfort_select_group_others') }}">
+                                @foreach($renfortCandidates['others'] as $c)
+                                    <option value="{{ $c->E_CODE }}">{{ $c->label }}</option>
+                                @endforeach
+                            </optgroup>
+                        @endif
+                    </select>
+                    <div class="form-text mt-1">
+                        {{ $hasCandidates ? __('event.renfort_number_help') : __('event.renfort_select_empty') }}
+                    </div>
                 </div>
                 <div class="modal-footer py-2">
                     <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">{{ __('common.cancel') }}</button>
-                    <button type="submit" class="btn btn-sm btn-primary">{{ __('event.btn_attach_renfort') }}</button>
+                    <button type="submit" class="btn btn-sm btn-primary" @disabled(! $hasCandidates)>{{ __('event.btn_attach_renfort') }}</button>
                 </div>
             </form>
         </div>

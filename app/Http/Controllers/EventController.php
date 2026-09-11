@@ -7,6 +7,7 @@ use App\Models\Personnel;
 use App\Models\Section;
 use App\Services\GeneralSettingService;
 use App\Services\ICalExportService;
+use App\Services\ReinforcementTransmissionService;
 use App\Services\SectionScopeService;
 use App\Services\TableExportService;
 use Carbon\Carbon;
@@ -20,6 +21,9 @@ use Illuminate\View\View;
 
 class EventController extends Controller
 {
+    /** Activity type of a reinforcement sent to another section's event. */
+    public const RENFORT_TYPE = 'REN';
+
     public function __construct(
         private readonly SectionScopeService $sectionScope,
     ) {}
@@ -285,6 +289,8 @@ class EventController extends Controller
             ->get();
 
         // Reinforcement request summary (for the show card preview).
+        $renfortCandidates = $this->renfortAttachCandidates((int) $event->E_CODE);
+
         $renfortRequest = DB::table('demande_renfort_vehicule')
             ->where('E_CODE', $code)
             ->where('TV_CODE', '0')
@@ -406,7 +412,7 @@ class EventController extends Controller
             'event', 'typeLabel', 'participants', 'candidates', 'vehicules', 'allVehicles',
             'functions', 'equipes', 'renforts', 'materiels', 'allMateriels',
             'requiredPositions', 'availablePositions', 'activeCount',
-            'renfortRequest', 'renfortVehicleTypes', 'renfortMaterials',
+            'renfortRequest', 'renfortVehicleTypes', 'renfortMaterials', 'renfortCandidates',
             'optionGroups', 'eventOptions',
             'eventLog', 'logTypes'
         ));
@@ -445,6 +451,8 @@ class EventController extends Controller
             'groupedTypes' => $groupedTypes,
             'sections' => $sections,
             'chefs' => $chefs,
+            'parentCandidates' => $this->renfortParentCandidates(null),
+            'renfortParent' => null,
         ]);
     }
 
@@ -458,6 +466,7 @@ class EventController extends Controller
             DB::table('evenement')->insert([
                 'E_CODE' => $code,
                 'TE_CODE' => $validated['TE_CODE'],
+                'E_PARENT' => $this->resolveRenfortParent($validated['TE_CODE'], $validated['E_PARENT'] ?? null, null),
                 'S_ID' => $validated['S_ID'],
                 'E_LIBELLE' => $validated['E_LIBELLE'],
                 'E_LIEU' => $validated['E_LIEU'] ?? '',
@@ -524,7 +533,10 @@ class EventController extends Controller
 
         [$groupedTypes, $sections, $chefs] = $this->formLookups();
 
-        return view('event.form', compact('event', 'horaires', 'groupedTypes', 'sections', 'chefs'));
+        $parentCandidates = $this->renfortParentCandidates((int) $event->E_CODE);
+        $renfortParent = $event->E_PARENT ? Event::find($event->E_PARENT) : null;
+
+        return view('event.form', compact('event', 'horaires', 'groupedTypes', 'sections', 'chefs', 'parentCandidates', 'renfortParent'));
     }
 
     public function update(Request $request, string $code): RedirectResponse
@@ -533,6 +545,15 @@ class EventController extends Controller
         $validated = $this->validateEventRequest($request, isCreate: false);
 
         DB::transaction(function () use ($event, $validated, $request) {
+            // A renfort can pick its main event only while it isn't attached yet;
+            // once attached, detaching happens from the main event.
+            if ($event->E_PARENT === null) {
+                $parent = $this->resolveRenfortParent($validated['TE_CODE'], $validated['E_PARENT'] ?? null, (int) $event->E_CODE);
+                if ($parent !== null) {
+                    $event->E_PARENT = $parent;
+                }
+            }
+
             $event->update([
                 'TE_CODE' => $validated['TE_CODE'],
                 'S_ID' => $validated['S_ID'],
@@ -877,6 +898,90 @@ class EventController extends Controller
     }
 
     // ── Form lookups ─────────────────────────────────────────────────────────
+
+    /**
+     * Main events a "Renfort" activity can be attached to: ongoing/upcoming,
+     * not cancelled, not themselves attached nor renforts, and either open to
+     * reinforcements or carrying a reinforcement request.
+     *
+     * Each item is an object with `E_CODE` (int) and a display `label`.
+     */
+    private function renfortParentCandidates(?int $exclude): Collection
+    {
+        $hours = DB::table('evenement_horaire')
+            ->select('E_CODE', DB::raw('MIN(EH_DATE_DEBUT) as first_day'), DB::raw('MAX(EH_DATE_FIN) as last_day'))
+            ->groupBy('E_CODE');
+
+        return DB::table('evenement as e')
+            ->joinSub($hours, 'h', 'h.E_CODE', '=', 'e.E_CODE')
+            ->leftJoin('section as s', 'e.S_ID', '=', 's.S_ID')
+            ->where('e.E_CANCELED', 0)
+            ->whereNull('e.E_PARENT')
+            ->where('e.TE_CODE', '<>', self::RENFORT_TYPE)
+            ->where('h.last_day', '>=', now()->toDateString())
+            ->where(function ($q) {
+                $q->where('e.E_ALLOW_REINFORCEMENT', 1)
+                    ->orWhereExists(fn ($sub) => $sub->from('demande_renfort_vehicule as d')->whereColumn('d.E_CODE', 'e.E_CODE'));
+            })
+            ->when($exclude !== null, fn ($q) => $q->where('e.E_CODE', '<>', $exclude))
+            ->orderBy('h.first_day')
+            ->get(['e.E_CODE', 'e.E_LIBELLE', 'h.first_day', 's.S_CODE'])
+            ->map(fn ($e) => (object) [
+                'E_CODE' => (int) $e->E_CODE,
+                'label' => ($e->E_LIBELLE ?: $e->E_CODE).' — '.Carbon::parse($e->first_day)->format('d/m/Y')
+                    .($e->S_CODE ? ' ('.$e->S_CODE.')' : ''),
+            ]);
+    }
+
+    /**
+     * Activities that can be attached as a renfort to a main event: ongoing or
+     * upcoming, not cancelled, not already attached, not the event itself and
+     * not a main event with renforts of its own. Grouped so "Renfort"-type
+     * activities come first.
+     *
+     * @return array{renforts: Collection, others: Collection}
+     */
+    private function renfortAttachCandidates(int $mainCode): array
+    {
+        $hours = DB::table('evenement_horaire')
+            ->select('E_CODE', DB::raw('MIN(EH_DATE_DEBUT) as first_day'), DB::raw('MAX(EH_DATE_FIN) as last_day'))
+            ->groupBy('E_CODE');
+
+        $rows = DB::table('evenement as e')
+            ->joinSub($hours, 'h', 'h.E_CODE', '=', 'e.E_CODE')
+            ->leftJoin('section as s', 'e.S_ID', '=', 's.S_ID')
+            ->where('e.E_CANCELED', 0)
+            ->whereNull('e.E_PARENT')
+            ->where('e.E_CODE', '<>', $mainCode)
+            ->where('e.TE_CODE', '<>', 'MC')
+            ->where('h.last_day', '>=', now()->toDateString())
+            ->whereNotExists(fn ($q) => $q->from('evenement as c')->whereColumn('c.E_PARENT', 'e.E_CODE'))
+            ->orderBy('h.first_day')
+            ->get(['e.E_CODE', 'e.E_LIBELLE', 'e.TE_CODE', 'h.first_day', 's.S_CODE'])
+            ->map(fn ($e) => (object) [
+                'E_CODE' => (int) $e->E_CODE,
+                'TE_CODE' => $e->TE_CODE,
+                'label' => '#'.$e->E_CODE.' — '.($e->E_LIBELLE ?: $e->E_CODE).' — '
+                    .Carbon::parse($e->first_day)->format('d/m/Y').($e->S_CODE ? ' ('.$e->S_CODE.')' : ''),
+            ]);
+
+        return [
+            'renforts' => $rows->where('TE_CODE', self::RENFORT_TYPE)->values(),
+            'others' => $rows->where('TE_CODE', '<>', self::RENFORT_TYPE)->values(),
+        ];
+    }
+
+    /** The main event to attach, when the activity is a renfort and the choice is valid. */
+    private function resolveRenfortParent(string $type, mixed $parent, ?int $self): ?int
+    {
+        if ($type !== self::RENFORT_TYPE || empty($parent)) {
+            return null;
+        }
+
+        $parent = (int) $parent;
+
+        return $this->renfortParentCandidates($self)->contains('E_CODE', $parent) ? $parent : null;
+    }
 
     private function formLookups(): array
     {
@@ -1244,6 +1349,7 @@ class EventController extends Controller
     {
         return $request->validate([
             'TE_CODE' => ['required', 'string', 'max:10'],
+            'E_PARENT' => ['nullable', 'integer'],
             'E_LIBELLE' => ['required', 'string', 'max:60'],
             'E_LIEU' => ['nullable', 'string', 'max:50'],
             'E_ADDRESS' => ['nullable', 'string', 'max:255'],
@@ -1276,7 +1382,7 @@ class EventController extends Controller
     }
 
     /** Reinforcement request management page. */
-    public function reinforcementRequest(string $code): View
+    public function reinforcementRequest(string $code, ReinforcementTransmissionService $tx): View
     {
         $event = Event::findOrFail($code);
         abort_unless(auth()->user()->hasPermission(0), 403);
@@ -1303,8 +1409,45 @@ class EventController extends Controller
             ->whereIn('TYPE_MATERIEL', $materialCategories->pluck('TM_USAGE'))
             ->pluck('TYPE_MATERIEL');
 
+        // Transmission: candidate sections (with who would receive it) + log.
+        $targets = $tx->targetSections((int) $event->S_ID)->map(function ($s) use ($tx) {
+            $s->recipients = $tx->recipients((int) $s->S_ID);
+
+            return $s;
+        });
+        $transmissions = $tx->history((int) $event->E_CODE);
+
         return view('event.renfort-request',
-            compact('event', 'global', 'vehicleTypes', 'assignedVehicleCodes', 'materialCategories', 'assignedCategories'));
+            compact('event', 'global', 'vehicleTypes', 'assignedVehicleCodes', 'materialCategories', 'assignedCategories', 'targets', 'transmissions'));
+    }
+
+    /** Transmit the reinforcement request to other sections by email. */
+    public function reinforcementTransmit(Request $request, string $code, ReinforcementTransmissionService $tx): RedirectResponse
+    {
+        abort_unless(auth()->user()->hasPermission(15), 403);
+        $event = Event::findOrFail($code);
+
+        $validated = $request->validate([
+            'sections' => ['required', 'array', 'min:1'],
+            'sections.*' => ['integer'],
+            'note' => ['nullable', 'string', 'max:600'],
+        ], [
+            'sections.required' => __('event.renfort_tx_no_section'),
+        ]);
+
+        $sent = $tx->transmit($event, $validated['sections'], $validated['note'] ?? null, auth()->user());
+
+        $redirect = redirect()->route('event.renfort-request', $code);
+        if (empty($sent)) {
+            return $redirect->with('error', __('event.renfort_tx_no_section'));
+        }
+
+        $empty = count(array_filter($sent, fn ($n) => $n === 0));
+        $message = __('event.renfort_tx_sent', ['sections' => count($sent), 'recipients' => array_sum($sent)]);
+
+        return $empty > 0
+            ? $redirect->with('warning', $message.' '.__('event.renfort_tx_some_empty', ['count' => $empty]))
+            : $redirect->with('success', $message);
     }
 
     /** Save the reinforcement request for an event. */

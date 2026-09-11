@@ -194,6 +194,7 @@ function eventStubShow(array $eventAttrs): void
                 'renfortRequest' => null,
                 'renfortVehicleTypes' => $empty,
                 'renfortMaterials' => $empty,
+                'renfortCandidates' => ['renforts' => $empty, 'others' => $empty],
                 'optionGroups' => $empty,
                 'eventOptions' => $empty,
                 'eventLog' => $empty,
@@ -321,4 +322,15 @@ test('the event report passes the expected view data', function () {
 
     $this->actingAs(eventFakeUser())->get('/events/EVT001/report')
         ->assertViewHasAll(['event', 'vehicules', 'materiels', 'eventLog', 'figures']);
+});
+
+// ── Reinforcement request transmission (#24) ─────────────────────────────────
+
+test('the reinforcement transmission route is registered', function () {
+    expect(route('event.renfort-request.transmit', 1))->toContain('/events/1/renfort-request/transmit');
+});
+
+test('unauthenticated users cannot transmit a reinforcement request', function () {
+    $this->withoutMiddleware(ValidateCsrfToken::class);
+    $this->post('/events/1/renfort-request/transmit')->assertRedirect('/login');
 });
