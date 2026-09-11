@@ -232,9 +232,13 @@ return [
 
     // renfort modal
     'modal_add_renfort_title' => 'Rattacher un renfort',
-    'renfort_number_label' => 'N° de l\'activité renfort',
-    'renfort_number_help' => 'Numéro de l\'événement à rattacher en tant que renfort.',
+    'renfort_number_label' => 'Activité renfort',
+    'renfort_number_help' => 'Activité à rattacher en tant que renfort (en cours ou à venir, non encore rattachée).',
     'renfort_number_placeholder' => 'ex. 12345',
+    'renfort_select_placeholder' => '— Choisir une activité —',
+    'renfort_select_group_renforts' => 'Renforts',
+    'renfort_select_group_others' => 'Autres activités',
+    'renfort_select_empty' => 'Aucune activité ne peut être rattachée pour le moment.',
     'btn_attach_renfort' => 'Rattacher',
 
     // duplicate modal
@@ -298,6 +302,12 @@ return [
     'form_btn_view' => 'Voir la fiche',
     'form_section_identity' => 'Identification',
     'form_type_label' => 'Type',
+    'form_renfort_parent_label' => 'Activité principale',
+    'form_renfort_parent_none' => '— Non rattaché —',
+    'form_renfort_parent_hint' => 'Rattachez ce renfort à l’activité qui l’a demandé.',
+    'form_renfort_parent_empty' => 'Aucune activité en cours n’accepte ou ne demande de renfort.',
+    'form_renfort_attached' => 'Ce renfort est rattaché à',
+    'form_renfort_detach_hint' => 'Pour le détacher, passez par l’onglet Renforts de l’activité principale.',
     'form_intitule_label' => 'Intitulé',
     'form_section_location' => 'Localisation',
     'form_lieu_label' => 'Lieu',
@@ -363,5 +373,35 @@ return [
     'renfort_req_material_heading' => 'Catégories de matériel requis',
     'renfort_req_specific_label' => 'Demande spécifique',
     'renfort_req_btn_save' => 'Enregistrer',
+
+    // Transmission de la demande de renfort à d'autres sections
+    'renfort_tx_heading' => 'Transmettre la demande',
+    'renfort_tx_hint' => 'Envoyez la demande de renfort par e-mail aux sections choisies. Chaque section reçoit la demande auprès des personnes pouvant créer un renfort (ou, à défaut, de ses responsables).',
+    'renfort_tx_no_targets' => 'Aucune autre section disponible.',
+    'renfort_tx_no_recipient' => 'Aucun destinataire joignable dans cette section.',
+    'renfort_tx_note_label' => 'Message aux sections (facultatif)',
+    'renfort_tx_btn' => 'Transmettre',
+    'renfort_tx_no_section' => 'Choisissez au moins une section.',
+    'renfort_tx_sent' => 'Demande transmise à :sections section(s) — :recipients destinataire(s).',
+    'renfort_tx_some_empty' => ':count section(s) sans destinataire joignable.',
+    'renfort_tx_history' => 'Historique des transmissions',
+    'renfort_tx_history_empty' => 'La demande n’a pas encore été transmise.',
+    'renfort_tx_history_line' => 'Transmise à :section par :sender (:count destinataire(s))',
+    'renfort_tx_channel_email' => 'Envoyée par e-mail',
+    'renfort_tx_channel_sms' => 'Envoyée par SMS',
+    'renfort_tx_channel_in_app' => 'Notification dans l’application',
+
+    // E-mail
+    'renfort_tx_mail_subject' => 'Demande de renfort — :event',
+    'renfort_tx_mail_intro' => ':sender (:section) sollicite un renfort de votre section.',
+    'renfort_tx_mail_event' => 'Activité',
+    'renfort_tx_mail_when' => 'Date',
+    'renfort_tx_mail_where' => 'Lieu',
+    'renfort_tx_mail_nb_vehicles' => 'Véhicules demandés',
+    'renfort_tx_mail_materials' => 'Matériel',
+    'renfort_tx_mail_point' => 'Point de regroupement',
+    'renfort_tx_mail_specific' => 'Demande spécifique',
+    'renfort_tx_mail_note' => 'Message',
+    'renfort_tx_mail_cta' => 'Pour répondre, créez un renfort et rattachez-le à l’activité :',
 
 ];

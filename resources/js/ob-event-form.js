@@ -50,3 +50,17 @@
         if (btn) { btn.closest('.ob-horaire-fieldset').remove(); renumber(); }
     });
 })();
+
+// Renfort activity type: show the "main event" picker only while the selected
+// type is the renfort type (the block is rendered server-side, hidden otherwise).
+(function () {
+    var block = document.querySelector('[data-renfort-parent]');
+    var type = document.getElementById('TE_CODE');
+    if (!block || !type) { return; }
+
+    function sync() {
+        block.hidden = type.value !== block.dataset.renfortType;
+    }
+    type.addEventListener('change', sync);
+    sync();
+})();
